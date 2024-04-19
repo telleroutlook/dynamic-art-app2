@@ -13,7 +13,6 @@ function DynamicArtCanvas() {
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    let size = 30; // 默认大小
 
     const drawShape = (x, y, size, color1, color2) => {
       if (color2) {
@@ -29,48 +28,34 @@ function DynamicArtCanvas() {
       ctx.fill();
     };
 
-    // 处理鼠标移动
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-
+    const handleMove = (x, y) => {
       const now = Date.now();
       const dt = now - lastTime;
       const dx = x - lastX;
       const dy = y - lastY;
       const speed = Math.sqrt(dx * dx + dy * dy) / dt;
-      const dynamicSize = Math.max(10, speed * 60); // 根据速度调整大小
-
-      const color1 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+      const dynamicSize = Math.max(10, speed * 10);
+      const color1 = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.6)`; // 设置透明度为0.6
       drawShape(x, y, dynamicSize, color1, null);
-
       lastX = x;
       lastY = y;
       lastTime = now;
     };
 
-    // 处理触摸移动
+    const handleMouseMove = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      handleMove(x, y);
+    };
+
     const handleTouchMove = (event) => {
-      event.preventDefault(); // 阻止滚动行为
+      event.preventDefault();
       const touch = event.touches[0];
       const rect = canvas.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
-
-      const now = Date.now();
-      const dt = now - lastTime;
-      const dx = x - lastX;
-      const dy = y - lastY;
-      const speed = Math.sqrt(dx * dx + dy * dy) / dt;
-      const dynamicSize = Math.max(10, speed * 60) / 2; // 根据速度调整大小并缩小一半
-
-      const color1 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-      drawShape(x, y, dynamicSize, color1, null);
-
-      lastX = x;
-      lastY = y;
-      lastTime = now;
+      handleMove(x, y);
     };
 
     canvas.addEventListener("mousemove", handleMouseMove);
@@ -82,12 +67,40 @@ function DynamicArtCanvas() {
     };
   }, []);
 
+  const handleClearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
   return (
     <>
       <canvas
         ref={canvasRef}
-        style={{ display: "block", background: "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)" }}
+        style={{
+          display: "block",
+          background: "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)",
+        }}
       ></canvas>
+      <div
+        style={{
+          position: "fixed",
+          top: 20,
+          right: 20,
+          width: 50,
+          height: 50,
+          borderRadius: "50%",
+          background: "rgba(255, 255, 255, 0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          cursor: "pointer",
+        }}
+        onClick={handleClearCanvas}
+        onTouchStart={handleClearCanvas} // 添加移动设备上的清除操作
+      >
+        Clear
+      </div>
       <Link href="/" style={{ position: "fixed", top: 20, left: 20, color: "black", fontSize: "20px" }}>
         Home
       </Link>

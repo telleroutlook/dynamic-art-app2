@@ -1,13 +1,13 @@
 // src/pages/DynamicArtCanvas.js
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 
-function DynamicArtCanvas() { // 使用命名函数
+function DynamicArtCanvas() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     let size = 30; // 默认大小
@@ -28,6 +28,19 @@ function DynamicArtCanvas() { // 使用命名函数
       ctx.globalAlpha = 1.0; // 恢复不透明度
     };
 
+    // 处理触摸移动
+    const handleTouchMove = (event) => {
+      event.preventDefault(); // 阻止滚动行为
+      const touch = event.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const dynamicSize = size; // 在移动端可能不需要根据速度调整大小
+      const color1 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+      drawShape(x, y, dynamicSize, color1, null); // 移动端不使用渐变色
+    };
+
+    // 处理鼠标移动
     const handleMouseMove = (event) => {
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
@@ -35,45 +48,15 @@ function DynamicArtCanvas() { // 使用命名函数
       const speed = Math.abs(event.movementX) + Math.abs(event.movementY);
       const dynamicSize = speed * 0.1 + 10;
       const color1 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-      drawShape(x, y, dynamicSize, color1);
+      drawShape(x, y, dynamicSize, color1, null);
     };
 
-    const handleClick = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const color1 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-      const color2 = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-      drawShape(x, y, size, color1, color2);
-    };
-
-    const handleMouseWheel = (event) => {
-      const delta = event.deltaY < 0 ? 1.1 : 0.9;
-      size *= delta;
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const color1 = "rgba(0,0,255,0.5)";
-      const color2 = "rgba(255,0,0,0.5)";
-      drawShape(x, y, size, color1, color2);
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.key === "c") {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mousedown", handleClick);
-    window.addEventListener("wheel", handleMouseWheel);
-    window.addEventListener("keydown", handleKeyDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchmove', handleTouchMove);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mousedown", handleClick);
-      window.removeEventListener("wheel", handleMouseWheel);
-      window.removeEventListener("keydown", handleKeyDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('touchmove', handleTouchMove);
     };
   }, []);
 
@@ -81,9 +64,9 @@ function DynamicArtCanvas() { // 使用命名函数
     <>
       <canvas
         ref={canvasRef}
-        style={{ display: "block", background: "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)" }}
+        style={{ display: 'block', background: 'linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)' }}
       ></canvas>
-      <Link href="/" style={{ position: "fixed", top: 20, left: 20, color: "black", fontSize: "20px" }}>
+      <Link href="/" style={{ position: 'fixed', top: 20, left: 20, color: 'black', fontSize: '20px' }}>
         Home
       </Link>
     </>

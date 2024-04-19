@@ -1,12 +1,13 @@
 // src/pages/DynamicArtCanvas.js
+
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
 
 function DynamicArtCanvas() {
   const canvasRef = useRef(null);
-  let lastX = 0;
-  let lastY = 0;
-  let lastTime = Date.now();
+  const lastXRef = useRef(0);
+  const lastYRef = useRef(0);
+  const lastTimeRef = useRef(Date.now());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -30,16 +31,16 @@ function DynamicArtCanvas() {
 
     const handleMove = (x, y) => {
       const now = Date.now();
-      const dt = now - lastTime;
-      const dx = x - lastX;
-      const dy = y - lastY;
+      const dt = now - lastTimeRef.current;
+      const dx = x - lastXRef.current;
+      const dy = y - lastYRef.current;
       const speed = Math.sqrt(dx * dx + dy * dy) / dt;
       const dynamicSize = Math.max(10, speed * 10);
       const color1 = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.6)`; // 设置透明度为0.6
       drawShape(x, y, dynamicSize, color1, null);
-      lastX = x;
-      lastY = y;
-      lastTime = now;
+      lastXRef.current = x;
+      lastYRef.current = y;
+      lastTimeRef.current = now;
     };
 
     const handleMouseMove = (event) => {

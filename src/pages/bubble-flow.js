@@ -5,20 +5,21 @@ function DynamicArtCanvas() {
   const canvasRef = useRef(null);
   const [bubbles, setBubbles] = useState([]);
   const [ctx, setCtx] = useState(null);
-  const isClient = typeof window !== "undefined"; // 检查是否在客户端环境
+  const [animationId, setAnimationId] = useState(null);
+  const isClient = typeof window !== "undefined";
 
-  // Update bubbles by pointer (mouse/touch)
   const updateBubblesByPointer = useCallback((x, y) => {
     setBubbles((prevBubbles) =>
       prevBubbles.map((bubble) => {
         const dx = x - bubble.x;
         const dy = y - bubble.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const influence = Math.max(0, 1 - distance / 200);
+        // 增加影响力的范围和系数
+        const influence = Math.max(0, 1 - distance / 500); // 增加最大影响距离
         return {
           ...bubble,
-          dx: bubble.dx + dx * influence * 0.001,
-          dy: bubble.dy + dy * influence * 0.001,
+          dx: bubble.dx + dx * influence * 1, // 增加影响系数
+          dy: bubble.dy + dy * influence * 1,
         };
       })
     );
@@ -26,119 +27,107 @@ function DynamicArtCanvas() {
 
   const handleMouseMove = useCallback(
     (event) => {
-      if (isClient) {
+      if (isClient && ctx) {
         updateBubblesByPointer(event.clientX, event.clientY);
       }
     },
-    [isClient, updateBubblesByPointer]
+    [isClient, updateBubblesByPointer, ctx]
   );
 
   const handleTouchMove = useCallback(
     (event) => {
-      if (isClient && event.touches.length > 0) {
+      if (isClient && event.touches.length > 0 && ctx) {
         updateBubblesByPointer(event.touches[0].clientX, event.touches[0].clientY);
       }
     },
-    [isClient, updateBubblesByPointer]
+    [isClient, updateBubblesByPointer, ctx]
   );
 
   useEffect(() => {
-    if (!isClient) return; // 如果不在客户端环境，则直接返回
+    if (!isClient || !canvasRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    setCtx(ctx);
+    const context = canvas.getContext("2d");
+    if (!context) return; // Ensure the context is not null
+    setCtx(context);
+
+    // Set the canvas dimensions to match the window size
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    // Initialize bubbles
-    initBubbles(canvas);
 
+    let localBubbles = initBubbles(canvas);
     const animate = () => {
+      if (!ctx) return; // Check ctx is not null
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Use the updated bubbles from the updateBubbles function
-      const updatedBubbles = updateBubbles(bubbles);
-      updatedBubbles.forEach(drawBubble);
-      // Update the state with the new bubbles
-      setBubbles(updatedBubbles);
-      requestAnimationFrame(animate);
+      localBubbles = updateBubbles(localBubbles);
+      localBubbles.forEach((bubble) => {
+        drawBubble(ctx, bubble); // Pass ctx as an argument
+      });
+      const nextAnimationId = requestAnimationFrame(animate);
+      setAnimationId(nextAnimationId);
     };
+    const animationId = requestAnimationFrame(animate);
+    setAnimationId(animationId);
 
-    // Start animation loop after ctx is set and bubbles are initialized
-    animate();
+    // Handle window resize
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      localBubbles = initBubbles(canvas); // Reset bubbles on resize
+    };
+    window.addEventListener("resize", handleResize);
 
-    console.log("Initial bubbles:", bubbles);
-    console.log("Initial ctx:", ctx);
-
-    // Event listeners
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("touchmove", handleTouchMove);
-
-    // Clean up
     return () => {
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("touchmove", handleTouchMove);
+      cancelAnimationFrame(animationId);
+      window.removeEventListener("resize", handleResize);
     };
-    console.log("Initial bubbles:", bubbles);
-  }, [handleMouseMove, handleTouchMove, isClient]);
+  }, [isClient, ctx]); // Add ctx to the dependency array
 
-  const handleClearCanvas = () => {
-    if (!isClient) return; // 如果不在客户端环境，则直接返回
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    initBubbles(canvas, true); // Reset bubbles
-  };
-
-  // Initialize bubbles
-  const initBubbles = (canvas, reset = false) => {
-    const newBubbles = reset
-      ? bubbles.map((bubble) => ({
-          ...bubble,
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          dx: (Math.random() * 40 - 20) * 0.1,
-          dy: (Math.random() * 40 - 20) * 0.1,
-        }))
-      : [];
+  const initBubbles = (canvas) => {
+    let newBubbles = [];
     for (let i = 0; i < 20; i++) {
-      newBubbles.push({
+      const newBubble = {
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`,
         radius: Math.random() * 20 + 10,
         dx: (Math.random() * 40 - 20) * 0.1,
         dy: (Math.random() * 40 - 20) * 0.1,
-      });
+      };
+      newBubbles.push(newBubble);
     }
-    setBubbles(newBubbles);
+    console.log("New bubbles:", newBubbles);
+    return newBubbles;
   };
 
-  // Draw bubble
-  const drawBubble = (bubble) => {
-    console.log("Drawing bubble:", bubble);
+  const drawBubble = (ctx, bubble) => {
+    if (!ctx) return;
     const { x, y, radius, color } = bubble;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
+    // 添加边框以突出显示影响
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; // 白色半透明边框
+    ctx.stroke();
+    console.log("Bubble drawn:", bubble);
   };
 
-  // Update bubble position
   const updateBubbles = (currentBubbles) => {
-    return currentBubbles.map((bubble) => {
+    console.log("Updating bubbles:", currentBubbles);
+    const updatedBubbles = currentBubbles.map((bubble) => {
       let { x, y, radius, dx, dy } = bubble;
-      // Bounce on edges
       if (x + radius > canvasRef.current.width || x - radius < 0) {
         dx = -dx;
       }
       if (y + radius > canvasRef.current.height || y - radius < 0) {
         dy = -dy;
       }
-      // Update position
       x += dx;
       y += dy;
       return { ...bubble, x, y, dx, dy };
     });
+    console.log("Updated bubbles:", updatedBubbles);
+    return updatedBubbles;
   };
 
   return (
@@ -150,25 +139,6 @@ function DynamicArtCanvas() {
           background: "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)",
         }}
       />
-      <div
-        style={{
-          position: "fixed",
-          top: 20,
-          right: 20,
-          width: 50,
-          height: 50,
-          borderRadius: "50%",
-          background: "rgba(255, 255, 255, 0.5)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          cursor: "pointer",
-        }}
-        onClick={handleClearCanvas}
-        onTouchStart={handleClearCanvas}
-      >
-        Clear
-      </div>
       <Link href="/" style={{ position: "fixed", top: 20, left: 20, color: "black", fontSize: "20px" }}>
         Home
       </Link>

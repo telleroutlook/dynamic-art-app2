@@ -14,12 +14,11 @@ function DynamicArtCanvas() {
         const dx = x - bubble.x;
         const dy = y - bubble.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        // 增加影响力的范围和系数
-        const influence = Math.max(0, 1 - distance / 500); // 增加最大影响距离
+        const influence = Math.max(0, 1 - distance / 500); // 保持影响距离
         return {
           ...bubble,
-          dx: bubble.dx + dx * influence * 1, // 增加影响系数
-          dy: bubble.dy + dy * influence * 1,
+          x: bubble.x + dx * influence, // 直接修改位置
+          y: bubble.y + dy * influence,
         };
       })
     );
@@ -106,10 +105,9 @@ function DynamicArtCanvas() {
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
-    // 添加边框以突出显示影响
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; // 白色半透明边框
+    // 为了增强视觉效果，可以根据气泡接近鼠标的程度改变颜色
+    ctx.strokeStyle = `rgba(255, 0, 0, ${Math.min(1, 0.5 / (bubble.dx * bubble.dx + bubble.dy * bubble.dy + 0.01))})`; // 红色边框，更接近鼠标时更明显
     ctx.stroke();
-    console.log("Bubble drawn:", bubble);
   };
 
   const updateBubbles = (currentBubbles) => {

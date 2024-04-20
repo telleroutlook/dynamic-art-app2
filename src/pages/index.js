@@ -17,10 +17,24 @@ export default function Home() {
                             src="/images/dynamic-art-canvas.jpg" 
                             alt="Dynamic Art Canvas" 
                             priority
-                            width={500} // Set a specific width
+                            width={300} // Set a specific width
                             height={300} // Set a specific height
                         />
                         <h2>Dynamic Art Canvas</h2>
+                    </div>
+                </Link>
+
+                <Link href="/bubble-flow" style={{ textDecoration: 'none' }}>
+                    <div className="card">
+                        {/* Using Next.js Image component for optimized image loading */}
+                        <Image 
+                            src="/images/bubble-flow.jpg" 
+                            alt="Bubble Flow" 
+                            priority
+                            width={300} // Set a specific width
+                            height={300} // Set a specific height
+                        />
+                        <h2>Bubble Flow</h2>
                     </div>
                 </Link>
                 {/* Additional cards can be added here */}

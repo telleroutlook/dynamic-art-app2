@@ -1,4 +1,4 @@
-// src/pages/DynamicArtCanvas.js
+// src/pages/dynamic-art-canvas.js
 
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";

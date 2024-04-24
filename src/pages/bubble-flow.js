@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import debounce from "lodash.debounce";
 
 // 全局速度因子,可以调整这个值来控制小球的运动速度
 const speedFactor = 0.3;
@@ -21,8 +20,8 @@ function DynamicArtCanvas() {
         y: Math.random() * canvas.height,
         color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`,
         radius: Math.random() * 20 + 10,
-        dx: (Math.random() * 40 - 20) * 0.1 * speedFactor,
-        dy: (Math.random() * 40 - 20) * 0.1 * speedFactor,
+        dx: (Math.random() * 40 - 20) * speedFactor, // initial random velocity
+        dy: (Math.random() * 40 - 20) * speedFactor, // initial random velocity
       };
       newBubbles.push(newBubble);
     }
@@ -59,7 +58,7 @@ function DynamicArtCanvas() {
   );
 
   const handlePointerDown = useCallback(
-    debounce((event) => {
+    (event) => {
       if (isClient && ctx && canvasRef.current) {
         const rect = canvasRef.current.getBoundingClientRect();
         const x = (event.clientX || event.touches[0].clientX) - rect.left;
@@ -84,7 +83,7 @@ function DynamicArtCanvas() {
 
         setExplosion({ x, y, radius: 0, visible: true });
       }
-    }, 100),
+    },
     [isClient, ctx, bubbles, speedFactor]
   );
 
@@ -94,16 +93,19 @@ function DynamicArtCanvas() {
     const updatedBubbles = updateBubbles(bubbles);
     setBubbles(updatedBubbles);
     updatedBubbles.forEach((bubble) => drawBubble(ctx, bubble));
+
+    // 绘制爆炸效果
     if (explosion.visible) {
       ctx.beginPath();
       ctx.arc(explosion.x, explosion.y, explosion.radius, 0, 2 * Math.PI);
-      ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 200)})`;
+      ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 1000)}`; // 修改这里,使半透明效果持续更长时间
       ctx.fill();
-      explosion.radius += 10;
+      explosion.radius += 2; // 修改这里,使半透明圆圈动画减慢5倍
       if (explosion.radius > 200) {
         setExplosion({ ...explosion, visible: false });
       }
     }
+
     const nextAnimationId = requestAnimationFrame(animate);
     setAnimationId(nextAnimationId);
   };

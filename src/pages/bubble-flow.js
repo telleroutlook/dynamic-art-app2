@@ -2,6 +2,9 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import debounce from "lodash.debounce";
 
+// 全局速度因子,可以调整这个值来控制小球的运动速度
+const speedFactor = 0.3;
+
 function DynamicArtCanvas() {
   const canvasRef = useRef(null);
   const [bubbles, setBubbles] = useState([]);
@@ -18,8 +21,8 @@ function DynamicArtCanvas() {
         y: Math.random() * canvas.height,
         color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`,
         radius: Math.random() * 20 + 10,
-        dx: (Math.random() * 40 - 20) * 0.1,
-        dy: (Math.random() * 40 - 20) * 0.1,
+        dx: (Math.random() * 40 - 20) * 0.1 * speedFactor,
+        dy: (Math.random() * 40 - 20) * 0.1 * speedFactor,
       };
       newBubbles.push(newBubble);
     }
@@ -35,22 +38,25 @@ function DynamicArtCanvas() {
     ctx.fill();
   };
 
-  const updateBubbles = (currentBubbles) => {
-    return currentBubbles.map((bubble) => {
-      let { x, y, radius, dx, dy } = bubble;
-      x += dx * 2;
-      y += dy * 2;
-      if (x + radius > canvasRef.current.width || x - radius < 0) {
-        x = Math.max(radius, Math.min(x, canvasRef.current.width - radius));
-        dx = -dx;
-      }
-      if (y + radius > canvasRef.current.height || y - radius < 0) {
-        y = Math.max(radius, Math.min(y, canvasRef.current.height - radius));
-        dy = -dy;
-      }
-      return { ...bubble, x, y, dx, dy };
-    });
-  };
+  const updateBubbles = useCallback(
+    (currentBubbles) => {
+      return currentBubbles.map((bubble) => {
+        let { x, y, radius, dx, dy } = bubble;
+        x += dx;
+        y += dy;
+        if (x + radius > canvasRef.current.width || x - radius < 0) {
+          x = Math.max(radius, Math.min(x, canvasRef.current.width - radius));
+          dx = -dx;
+        }
+        if (y + radius > canvasRef.current.height || y - radius < 0) {
+          y = Math.max(radius, Math.min(y, canvasRef.current.height - radius));
+          dy = -dy;
+        }
+        return { ...bubble, x, y, dx, dy };
+      });
+    },
+    [speedFactor]
+  );
 
   const handlePointerDown = useCallback(
     debounce((event) => {
@@ -58,58 +64,54 @@ function DynamicArtCanvas() {
         const rect = canvasRef.current.getBoundingClientRect();
         const x = (event.clientX || event.touches[0].clientX) - rect.left;
         const y = (event.clientY || event.touches[0].clientY) - rect.top;
-        setExplosion({ x, y, radius: 1, visible: true });
 
-        // Update bubble velocities only for bubbles within a certain radius
-        const explosionRadius = 100; // adjust this value to control the explosion radius
+        // 计算从点击点到每个小球的方向向量
         setBubbles(
           bubbles.map((bubble) => {
             const dx = bubble.x - x;
             const dy = bubble.y - y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < explosionRadius) {
-              const acceleration = 0.1; // adjust this value to control the explosion force
-              const velocityMultiplier = 1 + acceleration * (1 - distance / explosionRadius);
-              const explosionVelocityX = (dx / distance) * velocityMultiplier;
-              const explosionVelocityY = (dy / distance) * velocityMultiplier;
-              return {
-                ...bubble,
-                dx: bubble.dx + explosionVelocityX,
-                dy: bubble.dy + explosionVelocityY,
-              };
-            } else {
-              return bubble; // don't update velocity if bubble is outside explosion radius
-            }
+            const velocityMultiplier = 10; // 调整这个值来控制爆炸力
+            const explosionVelocityX = (dx / distance) * velocityMultiplier;
+            const explosionVelocityY = (dy / distance) * velocityMultiplier;
+            return {
+              ...bubble,
+              dx: bubble.dx + explosionVelocityX * speedFactor,
+              dy: bubble.dy + explosionVelocityY * speedFactor,
+            };
           })
         );
+
+        setExplosion({ x, y, radius: 0, visible: true });
       }
     }, 100),
-    [isClient, ctx]
+    [isClient, ctx, bubbles, speedFactor]
   );
 
-  useEffect(() => {
-    const animate = () => {
-      if (!ctx || !canvasRef.current) return;
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      const updatedBubbles = updateBubbles(bubbles);
-      setBubbles(updatedBubbles);
-      updatedBubbles.forEach((bubble) => drawBubble(ctx, bubble));
-      if (explosion.visible) {
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, explosion.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 200)})`;
-        ctx.fill();
-        explosion.radius += 10;
-        if (explosion.radius > 200) {
-          setExplosion({ ...explosion, visible: false });
-        }
+  const animate = () => {
+    if (!ctx || !canvasRef.current) return;
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    const updatedBubbles = updateBubbles(bubbles);
+    setBubbles(updatedBubbles);
+    updatedBubbles.forEach((bubble) => drawBubble(ctx, bubble));
+    if (explosion.visible) {
+      ctx.beginPath();
+      ctx.arc(explosion.x, explosion.y, explosion.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 200)})`;
+      ctx.fill();
+      explosion.radius += 10;
+      if (explosion.radius > 200) {
+        setExplosion({ ...explosion, visible: false });
       }
-      const nextAnimationId = requestAnimationFrame(animate);
-      setAnimationId(nextAnimationId);
-    };
-    const animationId = requestAnimationFrame(animate);
+    }
+    const nextAnimationId = requestAnimationFrame(animate);
+    setAnimationId(nextAnimationId);
+  };
+
+  useEffect(() => {
+    animate();
     return () => cancelAnimationFrame(animationId);
-  }, [ctx, explosion]);
+  }, [ctx, explosion, updateBubbles]);
 
   useEffect(() => {
     if (!isClient || !canvasRef.current) return;

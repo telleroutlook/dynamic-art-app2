@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
 // 全局速度因子,可以调整这个值来控制小球的运动速度
-const speedFactor = 0.3;
+const speedFactor = 0.1;
 
 function DynamicArtCanvas() {
   const canvasRef = useRef(null);
@@ -64,13 +64,14 @@ function DynamicArtCanvas() {
         const x = (event.clientX || event.touches[0].clientX) - rect.left;
         const y = (event.clientY || event.touches[0].clientY) - rect.top;
 
-        // 计算从点击点到每个小球的方向向量
+        setExplosion({ x, y, radius: 0, visible: true });
+
         setBubbles(
           bubbles.map((bubble) => {
             const dx = bubble.x - x;
             const dy = bubble.y - y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const velocityMultiplier = 10; // 调整这个值来控制爆炸力
+            const velocityMultiplier = 30;
             const explosionVelocityX = (dx / distance) * velocityMultiplier;
             const explosionVelocityY = (dy / distance) * velocityMultiplier;
             return {
@@ -80,31 +81,34 @@ function DynamicArtCanvas() {
             };
           })
         );
-
-        setExplosion({ x, y, radius: 0, visible: true });
       }
     },
     [isClient, ctx, bubbles, speedFactor]
   );
 
-  const animate = () => {
+  const animateExplosion = () => {
+    if (!ctx || !canvasRef.current || !explosion.visible) return;
+    ctx.beginPath();
+    ctx.arc(explosion.x, explosion.y, explosion.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 1000)})`;
+    ctx.fill();
+    explosion.radius += 2;
+    if (explosion.radius > 200) {
+      setExplosion({ ...explosion, visible: false });
+    }
+  };
+
+  const animateBubbles = () => {
     if (!ctx || !canvasRef.current) return;
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     const updatedBubbles = updateBubbles(bubbles);
     setBubbles(updatedBubbles);
     updatedBubbles.forEach((bubble) => drawBubble(ctx, bubble));
+  };
 
-    // 绘制爆炸效果
-    if (explosion.visible) {
-      ctx.beginPath();
-      ctx.arc(explosion.x, explosion.y, explosion.radius, 0, 2 * Math.PI);
-      ctx.fillStyle = `rgba(255, 165, 0, ${Math.max(0, 0.5 - explosion.radius / 1000)}`; // 修改这里,使半透明效果持续更长时间
-      ctx.fill();
-      explosion.radius += 2; // 修改这里,使半透明圆圈动画减慢5倍
-      if (explosion.radius > 200) {
-        setExplosion({ ...explosion, visible: false });
-      }
-    }
+  const animate = () => {
+    animateBubbles();
+    animateExplosion();
 
     const nextAnimationId = requestAnimationFrame(animate);
     setAnimationId(nextAnimationId);

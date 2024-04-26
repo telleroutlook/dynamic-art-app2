@@ -115,9 +115,32 @@ function DynamicArtCanvas() {
   };
 
   useEffect(() => {
-    animate();
-    return () => cancelAnimationFrame(animationId);
-  }, [ctx, explosion, updateBubbles]);
+    if (!isClient || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    setCtx(context);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    setBubbles(initBubbles(canvas)); // 初始化气泡
+
+    // 启动动画
+    const animateId = requestAnimationFrame(animate);
+    setAnimationId(animateId);
+
+    return () => {
+      cancelAnimationFrame(animateId);
+    };
+  }, [isClient]);
+
+  useEffect(() => {
+    const animateId = requestAnimationFrame(animate);
+    setAnimationId(animateId);
+
+    return () => {
+      cancelAnimationFrame(animateId);
+    };
+  }, [ctx, bubbles]);
 
   useEffect(() => {
     if (!isClient || !canvasRef.current) return;
@@ -129,17 +152,6 @@ function DynamicArtCanvas() {
       canvas.removeEventListener("touchstart", handlePointerDown);
     };
   }, [isClient, handlePointerDown]);
-
-  useEffect(() => {
-    if (!isClient || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    setCtx(context);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    setBubbles(initBubbles(canvas));
-  }, [isClient]);
 
   return (
     <>

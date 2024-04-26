@@ -94,7 +94,10 @@ function DynamicArtCanvas() {
     ctx.fill();
     explosion.radius += 2;
     if (explosion.radius > 200) {
-      setExplosion({ ...explosion, visible: false });
+      setExplosion({ x: 0, y: 0, radius: 0, visible: false }); // Reset explosion state
+      setTimeout(() => {
+        setExplosion({ x: 0, y: 0, radius: 0, visible: true }); // Restart animation after a short delay
+      }, 500); // adjust the delay time as needed
     }
   };
 

@@ -11,6 +11,8 @@ function DynamicArtCanvas() {
   const [animationId, setAnimationId] = useState(null);
   const [explosion, setExplosion] = useState({ x: 0, y: 0, radius: 0, visible: false });
   const isClient = typeof window !== "undefined";
+  const bubblesRef = useRef([]);
+  const explosionRef = useRef({ x: 0, y: 0, radius: 0, visible: false });
 
   const initBubbles = (canvas) => {
     let newBubbles = [];
@@ -125,7 +127,7 @@ function DynamicArtCanvas() {
     setCtx(context);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    setBubbles(initBubbles(canvas)); // 初始化气泡
+    setBubbles(initBubbles(canvas)); // 初始化���泡
 
     // 启动动画
     const animateId = requestAnimationFrame(animate);
@@ -155,6 +157,15 @@ function DynamicArtCanvas() {
       canvas.removeEventListener("touchstart", handlePointerDown);
     };
   }, [isClient, handlePointerDown]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      canvasRef.current.width = window.innerWidth;
+      canvasRef.current.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <>

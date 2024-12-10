@@ -49,6 +49,18 @@ export default function Home() {
               <h2>Bubble Flow</h2>
             </div>
           </Link>
+          <Link href="/puzzle" style={{ textDecoration: 'none' }}>
+            <div className="grid-item">
+              <Image
+                src="/images/puzzle.jpg"
+                alt="Number Puzzle"
+                priority
+                width={300}
+                height={300}
+              />
+              <h2>Number Puzzle</h2>
+            </div>
+          </Link>
           {/* 在此处添加更多应用程序卡片 */}
         </div>
       </div>

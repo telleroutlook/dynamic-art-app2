@@ -13,6 +13,7 @@ function DynamicArtCanvas() {
   const isClient = typeof window !== "undefined";
   const bubblesRef = useRef([]);
   const explosionRef = useRef({ x: 0, y: 0, radius: 0, visible: false });
+  const [isPaused, setIsPaused] = useState(false);
 
   const initBubbles = (canvas) => {
     let newBubbles = [];
@@ -111,10 +112,14 @@ function DynamicArtCanvas() {
     updatedBubbles.forEach((bubble) => drawBubble(ctx, bubble));
   };
 
+  const toggleAnimation = () => {
+    setIsPaused(!isPaused);
+  };
+
   const animate = () => {
+    if (isPaused) return;
     animateBubbles();
     animateExplosion();
-
     const nextAnimationId = requestAnimationFrame(animate);
     setAnimationId(nextAnimationId);
   };
@@ -127,7 +132,7 @@ function DynamicArtCanvas() {
     setCtx(context);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    setBubbles(initBubbles(canvas)); // 初始化���泡
+    setBubbles(initBubbles(canvas)); // 初始化泡泡
 
     // 启动动画
     const animateId = requestAnimationFrame(animate);
@@ -176,6 +181,9 @@ function DynamicArtCanvas() {
           background: "linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)",
         }}
       />
+      <button onClick={toggleAnimation} style={{ position: "fixed", top: 20, right: 20 }}>
+        {isPaused ? "Resume" : "Pause"}
+      </button>
       <Link href="/" style={{ position: "fixed", top: 20, left: 20, color: "black", fontSize: "20px" }}>
         Home
       </Link>

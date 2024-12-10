@@ -3,24 +3,21 @@ import Image from 'next/image';
 import backgroundSvg from '../../public/images/background.svg';
 
 export default function Home() {
-  const backgroundStyle = {
-    backgroundImage: `url(${backgroundSvg.src})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: -1,
-  };
-
   return (
-    <div className="container">
+    <div className="container" style={{
+      backgroundImage: `url(${backgroundSvg.src})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: -1,
+    }}>
       <div className="background-overlay"></div>
       <div className="hero">
-        <div className="background-svg" style={backgroundStyle} />
         <h1 className="title">Art Gallery</h1>
       </div>
       <div className="gallery">

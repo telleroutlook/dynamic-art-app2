@@ -49,9 +49,16 @@ const Puzzle = () => {
     setGuess('');
   };
 
+  const resetGame = () => {
+    setGuess('');
+    setScore(0);
+    setClue('Click to start');
+    setRange('Range: - to -');
+  };
+
   return (
     <div className="puzzle-container">
-      <h1>Solve the number puzzle with the given clues!</h1>
+      <h1>Solve the Number Puzzle!</h1>
       <div className="clue">{clue}</div>
       <div className="range">{range}</div>
       <form onSubmit={handleSubmit}>
@@ -62,50 +69,70 @@ const Puzzle = () => {
           min="1"
           max="100"
           required
+          className="guess-input"
         />
-        <button type="submit">Submit</button>
+        <button type="submit" className="submit-button">Submit</button>
       </form>
+      <button onClick={resetGame} className="reset-button">Reset</button>
       <div className="score">Score: {score}</div>
       <style jsx>{`
+        :root {
+          --primary-color: #4a90e2;
+          --secondary-color: #50e3c2;
+          --background-color: #f5f7fa;
+          --text-color: #333;
+          --button-color: #4a90e2;
+          --button-hover-color: #357ab8;
+        }
         .puzzle-container {
-          font-family: Arial, sans-serif;
+          font-family: 'Roboto', sans-serif;
           text-align: center;
-          padding-top: 50px;
-          background-color: #f2f2f2;
+          padding: 50px 20px;
+          background-color: var(--background-color);
           display: flex;
           flex-direction: column;
           align-items: center;
+          min-height: 100vh;
+          justify-content: center;
         }
         h1 {
-          color: #333;
+          color: var(--primary-color);
+          margin-bottom: 20px;
         }
-        .clue {
+        .clue, .range, .score {
           font-size: 1.2em;
-          font-weight: bold;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
+          color: var(--text-color);
         }
-        .range {
-          font-size: 1.1em;
-          margin-bottom: 20px;
-        }
-        input {
+        .guess-input {
           width: 100px;
           font-size: 1.1em;
-          padding: 5px;
+          padding: 10px;
           text-align: center;
           margin-right: 10px;
+          border: 2px solid var(--primary-color);
+          border-radius: 5px;
+          transition: border-color 0.3s;
         }
-        button {
+        .guess-input:focus {
+          border-color: var(--secondary-color);
+          outline: none;
+        }
+        .submit-button, .reset-button {
           font-size: 1.1em;
-          padding: 5px 10px;
+          padding: 10px 20px;
           cursor: pointer;
+          background-color: var(--button-color);
+          color: white;
+          border: none;
+          border-radius: 5px;
+          transition: background-color 0.3s;
         }
-        .score {
-          font-size: 1.2em;
-          margin-top: 30px;
+        .submit-button:hover, .reset-button:hover {
+          background-color: var(--button-hover-color);
         }
         @media (max-width: 600px) {
-          input {
+          .guess-input {
             width: 80px;
           }
         }
